@@ -5,6 +5,9 @@ using Microsoft.AspNetCore.Http;
 
 namespace Blog.Core.Controllers
 {
+    /// <summary>
+    /// 模拟登陆
+    /// </summary>
     [ApiController]
     [Route("api/Login")]
     public class LoginController : ControllerBase
