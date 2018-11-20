@@ -2,41 +2,58 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Blog.Model;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Blog.Core.Controllers
 {
+    /// <summary>
+    /// Value Controller
+    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Policy = "Admin")]
     public class ValuesController : ControllerBase
     {
-        // GET api/values
+        /// <summary>
+        /// 获取values
+        /// </summary>
         [HttpGet]
         public ActionResult<IEnumerable<string>> Get()
         {
             return new string[] { "value1", "value2" };
         }
 
-        // GET api/values/5
+        /// <summary>
+        /// GET api/values/5
+        /// </summary>
         [HttpGet("{id}")]
         public ActionResult<string> Get(int id)
         {
             return "value";
         }
 
-        // POST api/values
+        /// <summary>
+        /// post
+        /// </summary>
+        /// <param name="love">model实体类参数</param>
         [HttpPost]
-        public void Post([FromBody] string value)
+        public void Post(Love love)
         {
         }
 
-        // PUT api/values/5
+        /// <summary>
+        /// PUT api/values/5
+        /// </summary>
         [HttpPut("{id}")]
         public void Put(int id, [FromBody] string value)
         {
         }
 
-        // DELETE api/values/5
+        /// <summary>
+        /// DELETE api/values/5
+        /// </summary>
         [HttpDelete("{id}")]
         public void Delete(int id)
         {
