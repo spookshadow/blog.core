@@ -4,6 +4,10 @@
     <ProjectReference Include="..\Blog.Core.IRepository\Blog.Core.IRepository.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="sqlSugarCore" Version="4.8.5" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
