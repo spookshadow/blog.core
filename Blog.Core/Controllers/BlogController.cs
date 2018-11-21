@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Blog.Core.IServices;
 using Blog.Core.Model;
-using Blog.Core.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,6 +15,16 @@ namespace Blog.Core
     [Authorize(Policy = "Admin")]
     public class BlogController : Controller
     {
+        IAdvertisementServices advertisementServices;
+        /// <summary>
+        /// 构造函数
+        /// </summary>
+        /// <param name="advertisementServices"></param>
+        public BlogController(IAdvertisementServices advertisementServices)
+        {
+            this.advertisementServices = advertisementServices;
+        }
+
         /// <summary>
         /// 测试Get
         /// GET: api/Blog
@@ -23,8 +32,6 @@ namespace Blog.Core
         [HttpGet("{id}", Name = "Get")]
         public async Task<List<Advertisement>> Get(int id)
         {
-            IAdvertisementServices advertisementServices = new AdvertisementServices();
-
             return await advertisementServices.Query(d => d.Id == id);
         }
     }

@@ -14,6 +14,10 @@ using Microsoft.Extensions.Options;
 using Swashbuckle.AspNetCore.Swagger;
 using Microsoft.Extensions.Caching.Memory;
 using Blog.Core.AuthHelper.OverWrite;
+using Autofac;
+using Blog.Core.IServices;
+using Autofac.Extensions.DependencyInjection;
+using System.Reflection;
 
 namespace Blog.Core
 {
@@ -38,7 +42,7 @@ namespace Blog.Core
         /// <summary>
         /// This method gets called by the runtime. Use this method to add services to the container.
         /// </summary>
-        public void ConfigureServices(IServiceCollection services)
+        public IServiceProvider ConfigureServices(IServiceCollection services)
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
 
@@ -74,7 +78,7 @@ namespace Blog.Core
                     Name = "Authorization",//jwt默认的参数名称
                     In = "header",//jwt默认存放Authorization信息的位置(请求头中)
                     Type = "apiKey"
-                }); 
+                });
                 #endregion
             });
             #endregion
@@ -92,6 +96,30 @@ namespace Blog.Core
                 options.AddPolicy("AdminOrClient", policy => policy.RequireRole("Admin,Client").Build());
             });
             #endregion
+
+            #region AutoFac
+
+            //实例化 AutoFac  容器   
+            var builder = new ContainerBuilder();
+
+            // 手动注入
+            // builder.RegisterType<AdvertisementServices>().As<IAdvertisementServices>();
+
+            // 反射注入
+            var assemblysServices = Assembly.Load("Blog.Core.Services");
+            builder.RegisterAssemblyTypes(assemblysServices).AsImplementedInterfaces(); // 指定已扫描程序集中的类型注册为提供所有其实现的接口
+            var assemblyRepository = Assembly.Load("Blog.Core.Repository");
+            builder.RegisterAssemblyTypes(assemblyRepository).AsImplementedInterfaces();
+
+            //将services填充到Autofac容器生成器中
+            builder.Populate(services);
+
+            //使用已进行的组件登记创建新容器
+            var ApplicationContainer = builder.Build();
+
+            #endregion
+
+            return new AutofacServiceProvider(ApplicationContainer);//第三方IOC接管 core内置DI容器
         }
 
         /// <summary>

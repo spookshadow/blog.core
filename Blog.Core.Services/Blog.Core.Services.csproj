@@ -6,6 +6,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <!-- <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <OutputPath>..\Blog.Core\bin\Debug\netcoreapp2.1</OutputPath> -->
   </PropertyGroup>
-
 </Project>
