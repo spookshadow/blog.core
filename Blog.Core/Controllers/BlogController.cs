@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Blog.Core.IServices;
@@ -16,6 +17,7 @@ namespace Blog.Core
     public class BlogController : Controller
     {
         IAdvertisementServices advertisementServices;
+
         /// <summary>
         /// 构造函数
         /// </summary>
@@ -36,4 +38,3 @@ namespace Blog.Core
         }
     }
 }
-

@@ -1,5 +1,9 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using Blog.Core.Common;
+using Blog.Core.Common.Cache;
+using Blog.Core.Model;
 using Castle.DynamicProxy;
 
 namespace Blog.Core
@@ -10,11 +14,11 @@ namespace Blog.Core
     public class CacheAOP : IInterceptor
     {
         //通过注入的方式，把缓存操作接口通过构造函数注入
-        private ICaching _cache;
+        private ICacheManager _cache;
         /// <summary>
         /// 构造器注入 cache实现
         /// </summary>
-        public CacheAOP(ICaching cache)
+        public CacheAOP(ICacheManager cache)
         {
             _cache = cache;
         }
@@ -23,13 +27,22 @@ namespace Blog.Core
         /// </summary>
         public void Intercept(IInvocation invocation)
         {
+            #region 验证当前方法Attribute,存在CachingAttribute 执行缓存
+            var method = invocation.MethodInvocationTarget ?? invocation.Method;
+            var qCachingAttribute = method.GetCustomAttributes(true).FirstOrDefault(x => x.GetType() == typeof(CachingAttribute)) as CachingAttribute;
+            if (qCachingAttribute == null)
+            {
+                invocation.Proceed();
+                return;
+            }
+            #endregion
+
             //获取自定义缓存键
             var cacheKey = CustomCacheKey(invocation);
             //根据key获取相应的缓存值
-            var cacheValue = _cache.Get(cacheKey);
-            System.Console.WriteLine("xxxxxxxxxxxxxxxxxxxxxxxxxxx cacheValue[" + cacheValue.ObjToString() + "]");
-            if (cacheValue != null)
+            if (_cache.Exists(cacheKey))
             {
+                var cacheValue = _cache.Get<List<Advertisement>>(cacheKey);
                 //将当前获取到的缓存值，赋值给当前执行方法
                 invocation.ReturnValue = cacheValue;
                 return;
@@ -39,7 +52,7 @@ namespace Blog.Core
             //存入缓存
             if (!string.IsNullOrWhiteSpace(cacheKey))
             {
-                _cache.Set(cacheKey, invocation.ReturnValue);
+                _cache.Set(cacheKey, invocation.ReturnValue, TimeSpan.FromHours(2));
             }
         }
 

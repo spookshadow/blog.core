@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using Blog.Core.Common;
 using Blog.Core.IRepository;
 using Blog.Core.IServices;
 using Blog.Core.Repository;
@@ -133,6 +134,7 @@ namespace Blog.Core.Services
         /// </summary>
         /// <param name="whereExpression">whereExpression</param>
         /// <returns>数据列表</returns>
+        [Caching(AbsoluteExpiration = 10)]//增加特性
         public async Task<List<TEntity>> Query(Expression<Func<TEntity, bool>> whereExpression)
         {
             return await baseDal.Query(whereExpression);

@@ -1,24 +1,19 @@
 ﻿using System;
 using System.IO;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Swashbuckle.AspNetCore.Swagger;
 using Microsoft.Extensions.Caching.Memory;
 using Blog.Core.AuthHelper.OverWrite;
 using Autofac;
-using Blog.Core.IServices;
 using Autofac.Extensions.DependencyInjection;
 using Autofac.Extras.DynamicProxy;
 using System.Reflection;
+using Blog.Core.Common.Cache;
 
 namespace Blog.Core
 {
@@ -99,7 +94,7 @@ namespace Blog.Core
             #endregion
 
             #region 将 TService 中指定的类型的范围服务添加到实现
-            services.AddScoped<ICaching, MemoryCaching>();
+            services.AddScoped<ICacheManager, RedisCacheManager>();
             #endregion
 
             #region AutoFac
