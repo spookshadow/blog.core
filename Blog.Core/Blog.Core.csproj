@@ -24,6 +24,7 @@
     <ProjectReference Include="..\Blog.Core.Model\Blog.Core.Model.csproj" />
     <ProjectReference Include="..\Blog.Core.Repository\Blog.Core.Repository.csproj" />
     <ProjectReference Include="..\Blog.Core.Services\Blog.Core.Services.csproj" />
+    <ProjectReference Include="..\Blog.Core.Common\Blog.Core.Common.csproj" />
   </ItemGroup>
 
 </Project>

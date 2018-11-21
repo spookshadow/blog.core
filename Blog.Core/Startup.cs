@@ -17,6 +17,7 @@ using Blog.Core.AuthHelper.OverWrite;
 using Autofac;
 using Blog.Core.IServices;
 using Autofac.Extensions.DependencyInjection;
+using Autofac.Extras.DynamicProxy;
 using System.Reflection;
 
 namespace Blog.Core
@@ -97,19 +98,33 @@ namespace Blog.Core
             });
             #endregion
 
+            #region 将 TService 中指定的类型的范围服务添加到实现
+            services.AddScoped<ICaching, MemoryCaching>();
+            #endregion
+
             #region AutoFac
 
             //实例化 AutoFac  容器   
             var builder = new ContainerBuilder();
+
+            #region 注入切面
+            builder.RegisterType<CacheAOP>();
+            #endregion
+
+            #region 注入Services/Repository
 
             // 手动注入
             // builder.RegisterType<AdvertisementServices>().As<IAdvertisementServices>();
 
             // 反射注入
             var assemblysServices = Assembly.Load("Blog.Core.Services");
-            builder.RegisterAssemblyTypes(assemblysServices).AsImplementedInterfaces(); // 指定已扫描程序集中的类型注册为提供所有其实现的接口
+            // 指定已扫描程序集中的类型注册为提供所有其实现的接口
+            builder.RegisterAssemblyTypes(assemblysServices).AsImplementedInterfaces()
+                .InstancePerLifetimeScope().EnableInterfaceInterceptors().InterceptedBy(typeof(CacheAOP)); // 加入拦截器
             var assemblyRepository = Assembly.Load("Blog.Core.Repository");
             builder.RegisterAssemblyTypes(assemblyRepository).AsImplementedInterfaces();
+
+            #endregion
 
             //将services填充到Autofac容器生成器中
             builder.Populate(services);
