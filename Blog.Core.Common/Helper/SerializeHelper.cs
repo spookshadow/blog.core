@@ -32,5 +32,11 @@ namespace Blog.Core.Common.Helper
             var jsonString = Encoding.UTF8.GetString(value);
             return JsonConvert.DeserializeObject<TEntity>(jsonString);
         }
+
+        public static Object Deserialize(byte[] value)
+        {
+            var jsonString = Encoding.UTF8.GetString(value);
+            return JsonConvert.DeserializeObject(jsonString);
+        }
     }
 }

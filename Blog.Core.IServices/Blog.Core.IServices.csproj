@@ -3,6 +3,12 @@
   <ItemGroup>
     <ProjectReference Include="..\Blog.Core.IRepository\Blog.Core.IRepository.csproj" />
     <ProjectReference Include="..\Blog.Core.Repository\Blog.Core.Repository.csproj" />
+    <ProjectReference Include="..\Blog.Core.Common\Blog.Core.Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AspectCore.Core" Version="1.0.1" />
+    <PackageReference Include="AspectCore.Extensions.DependencyInjection" Version="1.0.1" />
   </ItemGroup>
 
   <PropertyGroup>

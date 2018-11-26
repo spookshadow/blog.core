@@ -14,25 +14,18 @@ using Autofac.Extensions.DependencyInjection;
 using Autofac.Extras.DynamicProxy;
 using System.Reflection;
 using Blog.Core.Common.Cache;
-using AspectCore.Extensions.DependencyInjection;
-using AspectCore.Configuration;
-using Blog.Core.Repository;
-using Blog.Core.IRepository;
-using Blog.Core.IServices;
-using Blog.Core.Services;
-using Blog.Core.Common.Interceptor;
 
 namespace Blog.Core
 {
     /// <summary>
     /// 项目启动文件
     /// </summary>
-    public class Startup
+    public class Startup1
     {
         /// <summary>
         /// 构造函数
         /// </summary>
-        public Startup(IConfiguration configuration)
+        public Startup1(IConfiguration configuration)
         {
             Configuration = configuration;
         }
@@ -104,50 +97,39 @@ namespace Blog.Core
             services.AddScoped<ICacheManager, RedisCacheManager>();
             #endregion
 
-            #region AspectCore
-            services.AddTransient<IAdvertisementRepository, AdvertisementRepository>();
-            services.AddTransient<IAdvertisementServices, AdvertisementServices>();
+            #region AutoFac
 
-            services.AddTransient<ServicesCacheInterceptor>();
-            services.ConfigureDynamicProxy(config =>
-                {
-                    config.Interceptors.AddServiced<ServicesCacheInterceptor>(Predicates.ForService("*Services*"));
-                    config.NonAspectPredicates.AddMethod("Add*");
-                    config.NonAspectPredicates.AddMethod("Update*");
-                    config.NonAspectPredicates.AddMethod("Delete*");
-                }
-            );
+            //实例化 AutoFac  容器   
+            var builder = new ContainerBuilder();
 
-            #region CORS
-            services.AddCors(c =>
-            {
-                //↓↓↓↓↓↓↓注意正式环境不要使用这种全开放的处理↓↓↓↓↓↓↓↓↓↓
-                /*c.AddPolicy("AllRequests", policy =>
-                {
-                    policy
-                    .AllowAnyOrigin()//允许任何源
-                    .AllowAnyMethod()//允许任何方式
-                    .AllowAnyHeader()//允许任何头
-                    .AllowCredentials();//允许cookie
-                }); */
-                //↑↑↑↑↑↑↑注意正式环境不要使用这种全开放的处理↑↑↑↑↑↑↑↑↑↑
-
-
-                //一般采用这种方法
-                c.AddPolicy("LimitRequests", policy =>
-                {
-                    policy
-                    .WithOrigins("http://localhost:8090", "http://blog.core.xxx.com")//支持多个域名端口
-                    .WithMethods("GET", "POST", "PUT", "DELETE")//请求方法添加到策略
-                    .WithHeaders("authorization");//标头添加到策略
-                });
-
-            });
+            #region 注入切面
+            builder.RegisterType<CacheAOP>();
             #endregion
 
+            #region 注入Services/Repository
+
+            // 手动注入
+            // builder.RegisterType<AdvertisementServices>().As<IAdvertisementServices>();
+
+            // 反射注入
+            var assemblysServices = Assembly.Load("Blog.Core.Services");
+            // 指定已扫描程序集中的类型注册为提供所有其实现的接口
+            builder.RegisterAssemblyTypes(assemblysServices).AsImplementedInterfaces()
+                .InstancePerLifetimeScope().EnableInterfaceInterceptors().InterceptedBy(typeof(CacheAOP)); // 加入拦截器
+            var assemblyRepository = Assembly.Load("Blog.Core.Repository");
+            builder.RegisterAssemblyTypes(assemblyRepository).AsImplementedInterfaces();
+
             #endregion
-            return services.BuildAspectInjectorProvider();
-            // return new AutofacServiceProvider(ApplicationContainer);//第三方IOC接管 core内置DI容器
+
+            //将services填充到Autofac容器生成器中
+            builder.Populate(services);
+
+            //使用已进行的组件登记创建新容器
+            var ApplicationContainer = builder.Build();
+
+            #endregion
+
+            return new AutofacServiceProvider(ApplicationContainer);//第三方IOC接管 core内置DI容器
         }
 
         /// <summary>
@@ -180,8 +162,6 @@ namespace Blog.Core
             app.UseHttpsRedirection();
 
             app.UseMiddleware<JwtTokenAuth>();
-
-            app.UseCors("LimitRequests");
 
             app.UseMvc();
 

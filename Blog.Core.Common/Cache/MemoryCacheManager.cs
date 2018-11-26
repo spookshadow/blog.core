@@ -7,7 +7,7 @@ namespace Blog.Core
     /// <summary>
     /// 
     /// </summary>
-    public class MemoryCacheManager : ICacheManager
+    public class MemoryCacheManager 
     {
         //引用Microsoft.Extensions.Caching.Memory;这个和.net 还是不一样，没有了Httpruntime了
         private IMemoryCache _cache;

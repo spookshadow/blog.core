@@ -1,6 +1,7 @@
-using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Blog.Core.Common.Cache;
+using Blog.Core.IRepository;
 using Blog.Core.IServices;
 using Blog.Core.Model;
 using Microsoft.AspNetCore.Authorization;
@@ -17,14 +18,21 @@ namespace Blog.Core
     public class BlogController : Controller
     {
         IAdvertisementServices advertisementServices;
+        IAdvertisementRepository advertisementRepository;
+
+        ICacheManager cacheManager;
 
         /// <summary>
         /// 构造函数
         /// </summary>
         /// <param name="advertisementServices"></param>
-        public BlogController(IAdvertisementServices advertisementServices)
+        /// <param name="advertisementRepository"></param>
+        /// <param name="cacheManager"></param>
+        public BlogController(IAdvertisementServices advertisementServices, IAdvertisementRepository advertisementRepository, ICacheManager cacheManager)
         {
             this.advertisementServices = advertisementServices;
+            this.advertisementRepository = advertisementRepository;
+            this.cacheManager = cacheManager;
         }
 
         /// <summary>
@@ -34,7 +42,8 @@ namespace Blog.Core
         [HttpGet("{id}", Name = "Get")]
         public async Task<List<Advertisement>> Get(int id)
         {
-            return await advertisementServices.Query(d => d.Id == id);
+            var result = await advertisementServices.Query(d => d.Id == id);
+            return result;
         }
     }
 }

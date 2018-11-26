@@ -11,6 +11,8 @@ namespace Blog.Core.Common.Cache
         /// <param name="key"></param>
         /// <returns></returns>
         TEntity Get<TEntity>(string key);
+
+        Object Get(string key, Type type);
         //设置
         void Set(string key, object value, TimeSpan cacheTime);
         //判断是否存在

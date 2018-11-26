@@ -1,12 +1,14 @@
 using System;
+using System.Text;
 using Blog.Core.Common.Helper;
+using Newtonsoft.Json;
 using StackExchange.Redis;
 
 namespace Blog.Core.Common.Cache
 {
     public class RedisCacheManager : ICacheManager
     {
-       
+
         private readonly string redisConnenctionString;
 
         public volatile ConnectionMultiplexer redisConnection;
@@ -85,12 +87,25 @@ namespace Blog.Core.Common.Cache
             {
                 //需要用的反序列化，将Redis存储的Byte[]，进行反序列化
                 return SerializeHelper.Deserialize<TEntity>(value);
-            } else
+            }
+            else
             {
                 return default(TEntity);
             }
         }
-     
+        public Object Get(string key, Type type)
+        {
+            var value = redisConnection.GetDatabase().StringGet(key);
+            if (value.HasValue)
+            {
+                //需要用的反序列化，将Redis存储的Byte[]，进行反序列化
+
+                var jsonString = Encoding.UTF8.GetString(value);
+                return JsonConvert.DeserializeObject(jsonString, type);
+            }
+            return null;
+        }
+
         /// <summary>
         /// 移除
         /// </summary>
