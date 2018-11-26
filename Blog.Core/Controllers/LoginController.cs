@@ -35,6 +35,7 @@ namespace Blog.Core.Controllers
 
         /// <summary>
         /// JSONP跨域实现
+        /// www testCORS.html 发送跨域请求
         /// </summary>
         [HttpGet]
         [Route("jsonp")]
