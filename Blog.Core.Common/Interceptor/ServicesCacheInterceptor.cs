@@ -28,7 +28,8 @@ namespace Blog.Core.Common.Interceptor
                 //根据key获取相应的缓存值
                 if (_cache.Exists(cacheKey))
                 {
-                    var type = _cache.Get<Type>(cacheKey + "_type");
+                    var type = context.ImplementationMethod.ReturnType.GetGenericArguments()[0];
+                    // var type = _cache.Get<Type>(cacheKey + "_type");
                     var cacheValue = _cache.Get(cacheKey, type);
                     var cacheResult = Task.Run(() => { return cacheValue; });
                     //将当前获取到的缓存值，赋值给当前执行方法
@@ -44,7 +45,7 @@ namespace Blog.Core.Common.Interceptor
                 {
                     Task<object> task = context.UnwrapAsyncReturnValue();
                     _cache.Set(cacheKey, task.Result, TimeSpan.FromHours(2));
-                    _cache.Set(cacheKey + "_type", task.Result.GetType(), TimeSpan.FromHours(2));
+                    // _cache.Set(cacheKey + "_type", task.Result.GetType(), TimeSpan.FromHours(2));
                 }
             }
             catch (Exception)

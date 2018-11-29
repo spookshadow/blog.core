@@ -26,12 +26,24 @@ namespace Blog.Core.AuthHelper.OverWrite
         public static string IssueJWT(TokenModelJWT tokenModel)
         {
             var dateTime = DateTime.UtcNow;
-            var claims = new Claim[]
+            /*var claims = new Claim[]
             {
                new Claim(JwtRegisteredClaimNames.Jti,tokenModel.Uid.ToString()),//Id
                new Claim("Role", tokenModel.Role),//角色
                new Claim(JwtRegisteredClaimNames.Iat,$"{new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds()}"),
                new Claim (JwtRegisteredClaimNames.Exp,$"{new DateTimeOffset(DateTime.Now.AddSeconds(10)).ToUnixTimeSeconds()}")
+            };*/
+
+            var claims = new Claim[]{
+                new Claim(JwtRegisteredClaimNames.Jti, tokenModel.Uid.ToString()),
+                new Claim(JwtRegisteredClaimNames.Iat, $"{new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds()}"),
+                new Claim(JwtRegisteredClaimNames.Nbf,$"{new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds()}") ,
+                //这个就是过期时间，目前是过期100秒，可自定义，注意JWT有自己的缓冲过期时间
+                new Claim (JwtRegisteredClaimNames.Exp,$"{new DateTimeOffset(DateTime.Now.AddSeconds(100)).ToUnixTimeSeconds()}"),
+                new Claim(JwtRegisteredClaimNames.Iss,"Blog.Core"),
+                new Claim(JwtRegisteredClaimNames.Aud,"wr"),
+                //这个Role是官方UseAuthentication要要验证的Role，我们就不用手动设置Role这个属性了
+                new Claim(ClaimTypes.Role,tokenModel.Role),
             };
 
             //秘钥
@@ -39,9 +51,8 @@ namespace Blog.Core.AuthHelper.OverWrite
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var jwt = new JwtSecurityToken(
-                issuer: "Blog.Core",    // jwt颁发者，非必须
-                claims: claims,         // 声明集合
-                expires: dateTime.AddHours(2),  // 指定token的生命周期，unix时间戳格式，非必须
+                issuer: "Blog.Core",            // jwt颁发者，非必须
+                claims: claims,                 // 声明集合
                 signingCredentials: creds);     // 使用私钥进行签名加密
 
             var jwtHandler = new JwtSecurityTokenHandler();
@@ -59,11 +70,12 @@ namespace Blog.Core.AuthHelper.OverWrite
         {
             var jwtHandler = new JwtSecurityTokenHandler();
             JwtSecurityToken jwtToken = jwtHandler.ReadJwtToken(jwtStr);
-            object role = new object(); ;
+            object role = new object();
             try
             {
                 //修改 ClaimTypes.Role => "Role" : 根据字符串"Role"获取解析后的角色
                 jwtToken.Payload.TryGetValue("Role", out role);
+                // jwtToken.Payload.TryGetValue(ClaimTypes.Role, out role);
             }
             catch (Exception e)
             {

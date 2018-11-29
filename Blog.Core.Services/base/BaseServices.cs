@@ -4,10 +4,13 @@ using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Blog.Core.Common;
 using Blog.Core.IRepository;
+using Blog.Core.IRepository.Base;
 using Blog.Core.IServices;
+using Blog.Core.IServices.Base;
 using Blog.Core.Repository;
+using Blog.Core.Repository.Base;
 
-namespace Blog.Core.Services
+namespace Blog.Core.Services.Base
 {
     public class BaseServices<TEntity> : IBaseServices<TEntity> where TEntity : class, new()
     {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 
-namespace Blog.Core.IServices
+namespace Blog.Core.IServices.Base
 {
     public interface IBaseServices<TEntity> where TEntity : class
     {

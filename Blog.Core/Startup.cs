@@ -21,6 +21,18 @@ using Blog.Core.IRepository;
 using Blog.Core.IServices;
 using Blog.Core.Services;
 using Blog.Core.Common.Interceptor;
+using log4net.Repository;
+using log4net;
+using log4net.Config;
+using Blog.Core.Filter.Blog.Core.Filter;
+using Blog.Core.Log;
+using AutoMapper;
+using Blog.Core.Common.Helper;
+using System.Linq;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using static Blog.Core.SwaggerHelper.CustomApiVersion;
 
 namespace Blog.Core
 {
@@ -30,35 +42,78 @@ namespace Blog.Core
     public class Startup
     {
         /// <summary>
+        /// log4net 仓储库
+        /// </summary>
+        public static ILoggerRepository repository { get; set; }
+
+        /// <summary>
         /// 构造函数
         /// </summary>
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
+            //log4net
+            repository = LogManager.CreateRepository("Blog.Core");
+            //指定配置文件
+            XmlConfigurator.Configure(repository, new FileInfo("log4net.config"));
+
         }
+
 
         /// <summary>
         /// 项目配置
         /// </summary>
         public IConfiguration Configuration { get; }
+        private const string ApiName = "Blog.Core";
+
 
         /// <summary>
         /// This method gets called by the runtime. Use this method to add services to the container.
         /// </summary>
         public IServiceProvider ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+            #region 注入全局异常捕获
+            services.AddMvc(
+                o =>
+                {
+                    o.Filters.Add(typeof(GlobalExceptionsFilter));
+                }
+            ).SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+            #endregion
+
+            #region 依赖解析
+            services.AddScoped<ICacheManager, RedisCacheManager>();
+            services.AddSingleton<ILoggerHelper, LogHelper>();
+            #endregion
+
+            #region Automapper
+            services.AddAutoMapper(typeof(Startup));
+            #endregion
 
             #region Swagger
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new Info
+                /*c.SwaggerDoc("v1", new Info
                 {
                     Version = "v0.1.0",
                     Title = "Blog.Core API",
                     Description = "项目说明文档",
                     TermsOfService = "None",
                     Contact = new Swashbuckle.AspNetCore.Swagger.Contact { Name = "Blog.Core", Email = "", Url = "" }
+                });*/
+
+                //遍历出全部的版本，做文档信息展示
+                typeof(ApiVersions).GetEnumNames().ToList().ForEach(version =>
+                {
+                    c.SwaggerDoc(version, new Info
+                    {
+                        // {ApiName} 定义成全局变量，方便修改
+                        Version = version,
+                        Title = $"{ApiName} 接口文档",
+                        Description = $"{ApiName} HTTP API " + version,
+                        TermsOfService = "None",
+                        Contact = new Contact { Name = "Blog.Core", Email = "Blog.Core@xxx.com", Url = "https://www.jianshu.com/u/94102b59cc2a" }
+                    });
                 });
 
                 #region Swagger添加文档注释
@@ -86,6 +141,31 @@ namespace Blog.Core
             });
             #endregion
 
+            #region 认证
+            services.AddAuthentication(x =>
+                {
+                    x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                    x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                }
+            ).AddJwtBearer(o =>
+                {
+                    o.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,//是否验证Issuer
+                        ValidateAudience = true,//是否验证Audience 
+                        ValidateIssuerSigningKey = true,//是否验证IssuerSigningKey 
+                        ValidIssuer = "Blog.Core",
+                        ValidAudience = "wr",
+                        ValidateLifetime = true,//是否验证超时  当设置exp和nbf时有效 同时启用ClockSkew 
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(JwtHelper.secretKey)),
+                        //注意这是缓冲过期时间，总的有效时间等于这个时间加上jwt的过期时间
+                        ClockSkew = TimeSpan.FromSeconds(30)
+                    };
+                }
+            );
+            #endregion
+
+
             #region Token服务注册
             services.AddSingleton<IMemoryCache>(factory =>
              {
@@ -100,14 +180,14 @@ namespace Blog.Core
             });
             #endregion
 
-            #region 将 TService 中指定的类型的范围服务添加到实现
-            services.AddScoped<ICacheManager, RedisCacheManager>();
-            #endregion
-
             #region AspectCore
+
+            #region 依赖解析
             services.AddTransient<IAdvertisementRepository, AdvertisementRepository>();
             services.AddTransient<IAdvertisementServices, AdvertisementServices>();
+            #endregion
 
+            #region 全局拦截器
             services.AddTransient<ServicesCacheInterceptor>();
             services.ConfigureDynamicProxy(config =>
                 {
@@ -117,6 +197,11 @@ namespace Blog.Core
                     config.NonAspectPredicates.AddMethod("Delete*");
                 }
             );
+            #endregion
+
+
+
+            #endregion
 
             #region CORS
             services.AddCors(c =>
@@ -145,9 +230,7 @@ namespace Blog.Core
             });
             #endregion
 
-            #endregion
             return services.BuildAspectInjectorProvider();
-            // return new AutofacServiceProvider(ApplicationContainer);//第三方IOC接管 core内置DI容器
         }
 
         /// <summary>
@@ -163,11 +246,15 @@ namespace Blog.Core
                 app.UseSwagger();
                 app.UseSwaggerUI(c =>
                 {
-                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "ApiHelp V1");
-                    /* 如果想直接在域名的根目录直接加载 swagger 比如访问：localhost:8001 就能访问，可以这样设置：
-                     * c.RoutePrefix = "";//路径配置，设置为空，表示直接访问该文件
-                     */
-                    // c.RoutePrefix = "";
+                    //之前是写死的
+                    //c.SwaggerEndpoint("/swagger/v1/swagger.json", "ApiHelp V1");
+                    //c.RoutePrefix = "";//路径配置，设置为空，表示直接在根域名（localhost:8001）访问该文件,注意localhost:8001/swagger是访问不到的，去launchSettings.json把launchUrl去掉
+
+                    //根据版本名称倒序 遍历展示
+                    typeof(ApiVersions).GetEnumNames().OrderByDescending(e => e).ToList().ForEach(version =>
+                    {
+                        c.SwaggerEndpoint($"/swagger/{version}/swagger.json", $"{ApiName} {version}");
+                    });
                 });
                 #endregion
             }
@@ -179,13 +266,20 @@ namespace Blog.Core
 
             app.UseHttpsRedirection();
 
-            app.UseMiddleware<JwtTokenAuth>();
+            // app.UseMiddleware<JwtTokenAuth>();
+            app.UseAuthentication();
 
-            app.UseCors("LimitRequests");
+            #region 跨域
+            //跨域第二种方法，之间使用策略
+            app.UseCors("LimitRequests");//将 CORS 中间件添加到 web 应用程序管线中, 以允许跨域请求。
+
+
+            //跨域第一种版本，请要 services.AddCors();
+            //    app.UseCors(options => options.WithOrigins("http://localhost:8021").AllowAnyHeader()
+            //.AllowAnyMethod());
+            #endregion
 
             app.UseMvc();
-
-            app.UseStaticFiles();   // 用于访问wwwroot下的文件
         }
     }
 }

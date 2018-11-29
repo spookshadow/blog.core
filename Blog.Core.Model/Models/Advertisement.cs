@@ -1,6 +1,6 @@
-using System;
+﻿using System;
 
-namespace Blog.Core.Model
+namespace Blog.Core.Model.Models
 {
     /// <summary>
     /// 广告

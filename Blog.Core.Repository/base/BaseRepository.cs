@@ -4,8 +4,9 @@ using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Blog.Core.IRepository;
 using SqlSugar;
+using Blog.Core.IRepository.Base;
 
-namespace Blog.Core.Repository
+namespace Blog.Core.Repository.Base
 {
     public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : class, new()
     {

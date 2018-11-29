@@ -14,6 +14,7 @@ using Autofac.Extensions.DependencyInjection;
 using Autofac.Extras.DynamicProxy;
 using System.Reflection;
 using Blog.Core.Common.Cache;
+using Blog.Core.AOP;
 
 namespace Blog.Core
 {
@@ -103,7 +104,8 @@ namespace Blog.Core
             var builder = new ContainerBuilder();
 
             #region 注入切面
-            builder.RegisterType<CacheAOP>();
+            builder.RegisterType<BlogCacheAOP>();
+            builder.RegisterType<AsyncExceptionHandlingInterceptor>();
             #endregion
 
             #region 注入Services/Repository
@@ -115,7 +117,7 @@ namespace Blog.Core
             var assemblysServices = Assembly.Load("Blog.Core.Services");
             // 指定已扫描程序集中的类型注册为提供所有其实现的接口
             builder.RegisterAssemblyTypes(assemblysServices).AsImplementedInterfaces()
-                .InstancePerLifetimeScope().EnableInterfaceInterceptors().InterceptedBy(typeof(CacheAOP)); // 加入拦截器
+                .InstancePerLifetimeScope().EnableInterfaceInterceptors().InterceptedBy(typeof(BlogCacheAOP)); // 加入拦截器
             var assemblyRepository = Assembly.Load("Blog.Core.Repository");
             builder.RegisterAssemblyTypes(assemblyRepository).AsImplementedInterfaces();
 

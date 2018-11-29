@@ -80,7 +80,7 @@ namespace Blog.Core.Common.Cache
         /// <typeparam name="TEntity"></typeparam>
         /// <param name="key"></param>
         /// <returns></returns>
-        public TEntity Get<TEntity>(string key)
+        public TEntity GetT<TEntity>(string key)
         {
             var value = redisConnection.GetDatabase().StringGet(key);
             if (value.HasValue)

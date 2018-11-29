@@ -10,7 +10,7 @@ namespace Blog.Core.Common.Cache
         /// <typeparam name="TEntity"></typeparam>
         /// <param name="key"></param>
         /// <returns></returns>
-        TEntity Get<TEntity>(string key);
+        TEntity GetT<TEntity>(string key);
 
         Object Get(string key, Type type);
         //设置

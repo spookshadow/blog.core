@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 
-namespace Blog.Core.IRepository
+namespace Blog.Core.IRepository.Base
 {
     public interface IBaseRepository<TEntity> where TEntity : class
     {

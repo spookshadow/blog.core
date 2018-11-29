@@ -38,7 +38,7 @@ namespace Blog.Core.AuthHelper.OverWrite
                 {
                     return _next(httpContext);
                 }
-                var tokenHeader = httpContext.Request.Headers["Authorization"].ToString();
+                var tokenHeader = httpContext.Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
                 //序列化token，获取授权
                 TokenModelJWT tm = JwtHelper.SerializeJWT(tokenHeader);
                 Console.WriteLine("xxxxxxxxxxxxxxxxxxxxxxxxx" + tm.Uid);

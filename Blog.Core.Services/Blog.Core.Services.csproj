@@ -5,6 +5,11 @@
     <ProjectReference Include="..\Blog.Core.Common\Blog.Core.Common.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="8.0.0" />
+    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="6.0.0" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <!-- <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
