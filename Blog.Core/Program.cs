@@ -27,6 +27,6 @@ namespace Blog.Core
         /// 宿主
         /// </summary>
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
-            WebHost.CreateDefaultBuilder(args).UseStartup<Startup1>();
+            WebHost.CreateDefaultBuilder(args).UseStartup<Startup>();
     }
 }

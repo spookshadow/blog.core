@@ -8,83 +8,81 @@ namespace Blog.Core.Common.Interceptor
 {
     public class ServicesCacheInterceptor : AbstractInterceptorAttribute
     {
+        #region 构造器
         //通过注入的方式，把缓存操作接口通过构造函数注入
         private ICacheManager _cache;
+        private ICacheKeyGenerator _cacheKeyGen;
+        private CacheOptions _cacheOptions;
         /// <summary>
-        /// 构造器注入 cache实现
+        /// 构造器
         /// </summary>
-        public ServicesCacheInterceptor(ICacheManager cache)
+        public ServicesCacheInterceptor(ICacheManager cache, ICacheKeyGenerator cacheKeyGen, CacheOptions options)
         {
             _cache = cache;
+            _cacheKeyGen = cacheKeyGen;
+            _cacheOptions = options;
         }
+        #endregion
 
         public async override Task Invoke(AspectContext context, AspectDelegate next)
         {
-            try
+            var method = context.ImplementationMethod;
+            #region 不执行缓存操作
+            if (method.ReturnType == typeof(void) || context.IsAsync() && method.ReturnType == typeof(Task))
             {
+                await next(context);
+                return;
+            }
 
-                //获取自定义缓存键
-                var cacheKey = CustomCacheKey(context);
-                //根据key获取相应的缓存值
-                if (_cache.Exists(cacheKey))
+            // 通过方法属性判断是否执行缓存操作
+            var attribute = method.GetCustomAttributes(true)
+                            .FirstOrDefault(p => p.GetType() == typeof(CachingAttribute)) as CachingAttribute;
+            if (attribute == null)
+            {
+                await next(context);
+                return;
+            }
+            #endregion
+
+            //获取自定义缓存键
+            var cacheKey = _cacheKeyGen.GeneratorKey(method, context.Parameters, attribute?.CacheKey, _cacheOptions?.CacheKeyPrefix);
+
+            var returnType = context.IsAsync()
+                ? method.ReturnType.GetGenericArguments().First()
+                : method.ReturnType;
+
+            //根据key获取相应的缓存值
+            if (_cache.Exists(cacheKey))
+            {
+                var cacheValue = _cache.Get(cacheKey, returnType);
+                if (context.IsAsync())
                 {
-                    var type = context.ImplementationMethod.ReturnType.GetGenericArguments()[0];
-                    // var type = _cache.Get<Type>(cacheKey + "_type");
-                    var cacheValue = _cache.Get(cacheKey, type);
+
                     var cacheResult = Task.Run(() => { return cacheValue; });
                     //将当前获取到的缓存值，赋值给当前执行方法
                     context.ReturnValue = cacheResult;
                     await context.Complete();
                     return;
                 }
-                //去执行当前的方法
-                await next(context);
-
-                //存入缓存
-                if (!string.IsNullOrWhiteSpace(cacheKey))
+                else
                 {
-                    Task<object> task = context.UnwrapAsyncReturnValue();
-                    _cache.Set(cacheKey, task.Result, TimeSpan.FromHours(2));
-                    // _cache.Set(cacheKey + "_type", task.Result.GetType(), TimeSpan.FromHours(2));
+                    context.ReturnValue = cacheValue;
+                    return;
                 }
             }
-            catch (Exception)
+            //去执行当前的方法
+            await next(context);
+
+            var timeout = attribute.AbsoluteExpiration.ObjToInt();
+            if (context.IsAsync())
             {
-                Console.WriteLine("Service threw an exception!");
-                throw;
+                Task<object> task = context.UnwrapAsyncReturnValue();
+                _cache.Set(cacheKey, task.Result, TimeSpan.FromMinutes(timeout));
             }
-            finally
+            else
             {
-
-                Console.WriteLine("After service call");
+                _cache.Set(cacheKey, context.ReturnValue, TimeSpan.FromMinutes(timeout));
             }
-        }
-
-        //自定义缓存键
-        private string CustomCacheKey(AspectContext context)
-        {
-            var typeName = context.GetType();
-            var methodName = context.ServiceMethod.Name;
-            var methodArguments = context.Parameters.Select(GetArgumentValue).Take(3).ToList();//获取参数列表，最多三个
-
-            string key = $"{typeName}:{methodName}:";
-            foreach (var param in methodArguments)
-            {
-                key += $"{param}:";
-            }
-
-            return key.TrimEnd(':');
-        }
-        //object 转 string
-        private string GetArgumentValue(object arg)
-        {
-            if (arg is int || arg is long || arg is string)
-                return arg.ToString();
-
-            if (arg is DateTime)
-                return ((DateTime)arg).ToString("yyyyMMddHHmmss");
-
-            return "";
         }
     }
 }

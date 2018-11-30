@@ -1,9 +1,7 @@
 ﻿using Blog.Core.Common;
 using Blog.Core.Common.Cache;
-using Blog.Core.Model.Models;
 using Castle.DynamicProxy;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
@@ -159,12 +157,11 @@ namespace Blog.Core.AOP
         #endregion
 
         #region 自定义缓存key
-
         private string CustomCacheKey(IInvocation invocation)
         {
             var typeName = invocation.TargetType.Name;
             var methodName = invocation.Method.Name;
-            var methodArguments = invocation.Arguments.Select(GetArgumentValue).Take(3).ToList();//获取参数列表，最多三个
+            var methodArguments = invocation.Arguments.Select(GetArgumentValue).ToList();//获取参数列表，最多三个
 
             string key = $"{typeName}:{methodName}:";
             foreach (var param in methodArguments)

@@ -11,5 +11,6 @@ namespace Blog.Core.Common
         //缓存绝对过期时间
         public int AbsoluteExpiration { get; set; } = 30;
 
+        public string CacheKey {get;set;}
     }
 }

@@ -82,8 +82,10 @@ namespace Blog.Core
             #endregion
 
             #region 依赖解析
+            services.AddSingleton<CacheOptions>();
             services.AddScoped<ICacheManager, RedisCacheManager>();
             services.AddSingleton<ILoggerHelper, LogHelper>();
+            services.AddScoped<ICacheKeyGenerator, DefaultCacheKeyGenerator>();
             #endregion
 
             #region Automapper

@@ -96,6 +96,7 @@ namespace Blog.Core
 
             #region 将 TService 中指定的类型的范围服务添加到实现
             services.AddScoped<ICacheManager, RedisCacheManager>();
+            services.AddScoped<ICacheKeyGenerator, DefaultCacheKeyGenerator>();
             #endregion
 
             #region AutoFac
@@ -104,6 +105,7 @@ namespace Blog.Core
             var builder = new ContainerBuilder();
 
             #region 注入切面
+            builder.RegisterType<CacheOptions>();
             builder.RegisterType<BlogCacheAOP>();
             builder.RegisterType<AsyncExceptionHandlingInterceptor>();
             #endregion
