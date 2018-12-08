@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Blog.Core.IServices;
 using Blog.Core.Model;
@@ -8,6 +9,7 @@ using Blog.Core.Model.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
+using Mono.Linq.Expressions;
 
 namespace Blog.Core.Controllers
 {
@@ -36,7 +38,14 @@ namespace Blog.Core.Controllers
         [HttpGet]
         public async Task<List<Advertisement>> Get(int id)
         {
-            return await services.Query(a => a.Id == id);
+            Expression<Func<Advertisement, bool>> exp = a => a.Id > 18 && a.ImgUrl.Contains("https");
+            Expression<Func<Advertisement, bool>> exp2 = a => a.Id > id && a.ImgUrl.Contains("https");
+
+            var s1 = exp.ToString();
+            var s2 = exp2.ToString();
+
+
+            return await services.Query(a => a.Id > id && a.ImgUrl.Contains("https"));
         }
         /// <summary>
         /// post

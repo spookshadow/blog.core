@@ -190,7 +190,7 @@ namespace Blog.Core
             #endregion
 
             #region 全局拦截器
-            services.AddTransient<ServicesCacheInterceptor>();
+            /*services.AddTransient<ServicesCacheInterceptor>();
             services.ConfigureDynamicProxy(config =>
                 {
                     config.Interceptors.AddServiced<ServicesCacheInterceptor>(Predicates.ForService("*Services*"));
@@ -198,7 +198,7 @@ namespace Blog.Core
                     config.NonAspectPredicates.AddMethod("Update*");
                     config.NonAspectPredicates.AddMethod("Delete*");
                 }
-            );
+            ); */
             #endregion
 
 
