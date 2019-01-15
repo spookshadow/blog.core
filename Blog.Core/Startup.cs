@@ -33,6 +33,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using static Blog.Core.SwaggerHelper.CustomApiVersion;
+using Microsoft.AspNetCore.Http.Features;
 
 namespace Blog.Core
 {
@@ -232,6 +233,15 @@ namespace Blog.Core
             });
             #endregion
 
+            #region 解决Multipart body length limit 134217728 exceeded
+            services.AddMvc();
+            services.Configure<FormOptions>(x =>
+            {
+                x.ValueLengthLimit = int.MaxValue;
+                x.MultipartBodyLengthLimit = int.MaxValue; // In case of multipart
+            });
+            #endregion
+
             return services.BuildAspectInjectorProvider();
         }
 
@@ -282,6 +292,7 @@ namespace Blog.Core
             #endregion
 
             app.UseMvc();
+            app.UseStaticFiles();
         }
     }
 }

@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ServerUpdate>
+  <item>
+    <ApplicationStart>OrderTool.exe</ApplicationStart>
+    <AppName>OrderTool</AppName>
+    <ReleaseDate>2018/12/26 14:29:24</ReleaseDate>
+    <ReleasePackageUrl>http://localhost:5000/win/1.2.0.0.zip</ReleasePackageUrl>
+    <ReleaseVersion>1.1.0.0</ReleaseVersion>
+    <VersionDesc>1、Increment$2、hello$3、123456</VersionDesc>
+    <UpdateMode>Cover</UpdateMode>
+    <UpdateFiles>OrderTool.exe,OrderTool.exe.config</UpdateFiles>
+  </item>
+</ServerUpdate>

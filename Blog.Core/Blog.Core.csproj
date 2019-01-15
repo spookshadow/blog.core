@@ -7,10 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="wwwroot\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="AspectCore.Core" Version="1.0.1" />
     <PackageReference Include="AspectCore.Extensions.DependencyInjection" Version="1.0.1" />
     <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="4.3.1" />
