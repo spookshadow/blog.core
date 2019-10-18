@@ -2,7 +2,9 @@
 {
     public class Customer
     {
-        public static Customer Instance(string userName, string dg, int status, string statusText, string mobile, string address, int gender)
+        public static Customer Instance(string userName, string dg, int status, string statusText,
+            string mobile, string address, string gender,
+            string orderId, string orderCode, string orderType)
         {
             return new Customer()
             {
@@ -12,13 +14,28 @@
                 StatusText = statusText,
                 Mobile = mobile,
                 Address = address,
-                Gender = gender
+                Gender = gender,
+                OrderId = orderId,
+                OrderCode = orderCode,
+                IntentOrderType = orderType
             };
         }
         /// <summary>
         /// 客户名
         /// </summary>
         public string UserName { get; set; }
+        /// <summary>
+        /// 订单ID
+        /// </summary>
+        public string OrderId { get; set; }
+        /// <summary>
+        /// 订单号
+        /// </summary>
+        public string OrderCode { get; set; }
+        /// <summary>
+        /// 单类型
+        /// </summary>
+        public string IntentOrderType { get; set; }
         /// <summary>
         /// 导购名
         /// </summary>
@@ -42,6 +59,6 @@
         /// <summary>
         /// 性别(0: 女， 1:男)
         /// </summary>
-        public int Gender { get; set; }
+        public string Gender { get; set; }
     }
 }

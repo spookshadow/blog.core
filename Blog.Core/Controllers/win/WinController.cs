@@ -11,6 +11,8 @@ using System.Web.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using System.Security.Cryptography;
+using System.Threading;
 
 namespace Blog.Core.Controllers
 {
@@ -21,6 +23,15 @@ namespace Blog.Core.Controllers
     public class WinController : Controller
     {
         /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        [HttpHead]
+        public void Index()
+        {
+
+        }
+        /// <summary>
         /// 测试
         /// </summary>
         /// <returns></returns>
@@ -28,7 +39,7 @@ namespace Blog.Core.Controllers
         [Route("Ceshi")]
         public string Ceshi()
         {
-            return "Hello";
+            return "Hello测试Test";
         }
 
         /// <summary>
@@ -70,6 +81,10 @@ namespace Blog.Core.Controllers
             {
                 'shopId': 'fe908aaf-ada5-4cb6-ab16-7ac2f36972eb',
                 'shopName': '西安雅居阁店'
+            },
+            {
+                'shopId': 'xxxxxxxx-ada5-4cb6-ab16-xxxxxxxxxxxx',
+                'shopName': 'xxxxxx店'
             }
         ]
     }
@@ -77,6 +92,7 @@ namespace Blog.Core.Controllers
                 #endregion
 
                 resMsg = json.ToObject<ResultMsg>();
+                resMsg.Info = $"{resMsg.Info}, account={account},pwd={pwd}";
             }
             catch (Exception ex)
             {
@@ -87,30 +103,48 @@ namespace Blog.Core.Controllers
             return Json(resMsg);
         }
 
+        private Dictionary<string, List<Customer>> dic = new Dictionary<string, List<Customer>>();
         /// <summary>
         /// 获取我的出图单客户信息
         /// </summary>
-        /// <param name="token"></param>
+        /// <param name="shopId"></param>
+        /// <param name="intentOrderType"></param>
         /// <returns></returns>
         [HttpPost]
         [Route("OrderInfo")]
-        public ActionResult OrderInfo(string token)
+        public ActionResult OrderInfo([FromBody]OrderInfoRequest request)
         {
             var resMsg = new ResultMsg();
             try
             {
                 resMsg.StatusCode = (int)StatusCodeEnum.Success;
                 resMsg.Info = "操作成功！";
-
-                List<Customer> list = new List<Customer>();
-                for (int i = 0; i < 16; i++)
+                //Thread.Sleep(5000);
+                var key = request.ShopId + request.IntentOrderType;
+                if (!dic.ContainsKey(key))
                 {
-                    Customer customer = Customer.Instance(
-                    "客户" + i, "导购" + i, i, "状态" + i, "1366666666" + i, "    广州市白云区太和镇南岭工业区中路" + i + "号（地铁3号线龙归站附近）", i % 2);
-                    list.Add(customer);
+                    List<Customer> list = new List<Customer>();
+                    Random random = new Random();
+                    var max = random.Next(20);
+                    for (int i = 0; i < max; i++)
+                    {
+                        Customer customer = Customer.Instance(
+                        "客户" + i,
+                        "导购" + i, i,
+                        "状态" + i,
+                        "1366666666" + i,
+                        key + i + "号（地铁3号线龙归站附近）",
+                        i % 2 == 0 ? "男" : "女",
+                        Guid.NewGuid().ToString(),
+                        "F134000" + i,
+                        request.IntentOrderType
+                        );
+                        list.Add(customer);
+                    }
+                    dic.Add(key, list);
                 }
 
-                resMsg.Data = list;
+                resMsg.Data = dic[key];
             }
             catch (Exception ex)
             {
@@ -166,7 +200,7 @@ namespace Blog.Core.Controllers
                     if (formFile.Length > 0)
                     {
                         var fileName = Encoding.UTF8.GetString(Convert.FromBase64String(formFile.FileName));
-                        code = fileName.Contains("002") ? "500" : "200";
+                        // code = fileName.Contains("002") ? "500" : "200";
                         string fileExt = Path.GetExtension(fileName);
                         long fileSize = formFile.Length; //获得文件大小，以字节为单位
                         string newFileName = System.Guid.NewGuid().ToString() + "." + fileExt; //随机生成新的文件名
@@ -432,7 +466,7 @@ namespace Blog.Core.Controllers
             var resMsg = new ResultMsg();
             try
             {
-                resMsg.Data = "1.0.0.0";
+                resMsg.Data = "3.0.0.1";
                 resMsg.StatusCode = (int)StatusCodeEnum.Success;
                 resMsg.Info = "操作成功！";
             }
@@ -444,5 +478,57 @@ namespace Blog.Core.Controllers
             return Json(resMsg);
         }
 
+        /// <summary>AES加密</summary>
+        /// <param name="text">明文</param>
+        /// <param name="key">密钥,长度为16的字符串</param>
+        /// <param name="iv">偏移量,长度为16的字符串</param>
+        /// <returns>密文</returns>
+
+        [HttpGet]
+        [Route("EncodeAES")]
+        public string EncodeAES(string text, string key, string iv)
+        {
+            text = "3b0eec76bcb33d416adf3597ce9ba25c&dfcaec3066a446b65fd63ea02f37fb81&YGZJAPP&00879676020&13623061080";
+            key = "1547884092264";
+
+            key = "1690a405da847e7f59cadfb5f3caa1f84cda33efc538dd579f2e67f5b73fae02";
+            iv = "0000000000000000";
+
+
+            Aes rijndaelCipher = Aes.Create();
+            rijndaelCipher.Mode = CipherMode.CBC;
+            rijndaelCipher.Padding = PaddingMode.PKCS7;
+            rijndaelCipher.KeySize = 128;
+            rijndaelCipher.BlockSize = 128;
+            byte[] pwdBytes = System.Text.Encoding.UTF8.GetBytes(key);
+            byte[] keyBytes = new byte[16];
+            int len = pwdBytes.Length;
+            if (len > keyBytes.Length)
+                len = keyBytes.Length;
+            System.Array.Copy(pwdBytes, keyBytes, len);
+            rijndaelCipher.Key = keyBytes;
+            rijndaelCipher.IV = Encoding.UTF8.GetBytes(iv);
+            ICryptoTransform transform = rijndaelCipher.CreateEncryptor();
+            byte[] plainText = Encoding.UTF8.GetBytes(text);
+            byte[] cipherBytes = transform.TransformFinalBlock(plainText, 0, plainText.Length);
+
+            var result = Convert.ToBase64String(cipherBytes);
+
+            var equalss = result == "4hCxYM42W9NDxhmRqhZlQ3UtkmoKTMoFoy%2BwdsuVVbrpwzVAzWX4oOgG85BGX8pT4JCVe8s3vyeY3hYImDHga%2Bias5z2dp2E1H9QkSl9EHOckjNHw6W9A%2BW1%2BexNvZm7GkgdsNYsI6ulnxvXIl%2FoZg%3D%3D";
+
+            return equalss + "";
+
+        }
+
+
     }
+
+
+}
+
+public class OrderInfoRequest
+{
+    public string ShopId { get; set; }
+    public string IntentOrderType { get; set; }
+    public string Token { get; set; }
 }
